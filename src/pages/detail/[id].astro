@@ -1,0 +1,128 @@
+---
+import Layout from '../../layouts/Layout.astro';
+export const prerender = false;
+const { id } = Astro.params;
+
+const apiUrl = `https://www.dasweltauto.at/api/locales/de_at/vehicles/${id}/detail`;
+
+let data = null;
+try {
+  const res = await fetch(apiUrl);
+  if (!res.ok) {
+    throw new Error(`API returned ${res.status}`);
+  }
+  data = await res.json();
+} catch (err) {
+  data = { error: String(err) };
+}
+---
+<Layout>
+  <main class="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-7xl mx-auto">
+      <a class="text-sm text-blue-600 hover:underline mb-4 inline-block" href="/">← Zurück zur Übersicht</a>
+
+      {data && data.overview ? (
+        <article class="bg-white shadow rounded-lg overflow-hidden">
+          <div class="p-6 border-b">
+            <h1 class="text-2xl font-semibold text-gray-900">{data.overview.header}</h1>
+            <p class="text-sm text-gray-600">{data.overview.subHeader}</p>
+          </div>
+
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 p-6">
+            <section class="lg:col-span-2">
+              <div class="bg-gray-100 rounded-md p-4">
+                {data.overview.imageUrls && data.overview.imageUrls.length > 0 ? (
+                  (() => {
+                    const imgs = data.overview.imageUrls.map((u) => u.replace(/\/+$|\s+$/g, '') + '/webp/936');
+                    const first = imgs[0];
+                    return (
+                      <div class="space-y-4">
+                        <div class="rounded-md overflow-hidden bg-black">
+                          <img id="hero-image" src={first} alt={data.overview.header} class="w-full h-80 md:h-96 object-cover" loading="eager" decoding="async" />
+                        </div>
+
+                        <div class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-3">
+                          {imgs.map((img) => (
+                            <button type="button" data-thumb={img} class="overflow-hidden rounded-md bg-white border hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                              <img src={img} alt={data.overview.header} loading="lazy" decoding="async" class="w-full h-20 object-cover" />
+                            </button>
+                          ))}
+                        </div>
+
+                        <script>
+                          {`(function(){
+                            try {
+                              const hero = document.getElementById('hero-image');
+                              if(!hero) return;
+                              document.querySelectorAll('[data-thumb]').forEach(el => {
+                                el.addEventListener('click', function(){
+                                  const url = this.getAttribute('data-thumb');
+                                  if(url) hero.src = url;
+                                });
+                              });
+                            } catch(e){ console.error(e); }
+                          })();`}
+                        </script>
+                      </div>
+                    );
+                  })()
+                ) : (
+                  <div class="h-64 flex items-center justify-center text-gray-500">Keine Bilder verfügbar</div>
+                )}
+              </div>
+            </section>
+
+            <aside class="lg:col-span-1">
+              <div class="p-4 bg-white rounded-lg shadow-inner">
+                <div class="mb-4">
+                  <div class="text-sm text-gray-500">Preis</div>
+                  <div class="text-xl font-bold text-green-600">€{data.overview.price}</div>
+                </div>
+
+                <ul class="text-sm text-gray-700 space-y-2">
+                  <li><span class="font-medium">Kilometer:</span> {data.overview.mileage} km</li>
+                  <li><span class="font-medium">Erstzulassung:</span> {data.overview.initialRegistrationDate}</li>
+                  <li><span class="font-medium">Leistung:</span> {data.overview.powerKw} kW / {data.overview.powerPs} PS</li>
+                  <li><span class="font-medium">Antrieb:</span> {data.overview.driveText}</li>
+                  <li><span class="font-medium">Getriebe:</span> {data.overview.gearTypeText}</li>
+                </ul>
+
+                <div class="mt-6">
+                  <a class="block w-full text-center bg-blue-600 text-white py-2 rounded hover:bg-blue-700" href={`tel:${data.overview.dealerPhoneNumber || data.dealerDetail?.vehicleLocation?.telephoneNumber || ''}`}>
+                    Händler anrufen
+                  </a>
+                </div>
+
+                {data.dealerDetail?.websiteUrl ? (
+                  <div class="mt-3 text-center">
+                    <a class="text-sm text-blue-600 hover:underline" href={data.dealerDetail.websiteUrl} target="_blank">Zur Händlerseite</a>
+                  </div>
+                ) : null}
+              </div>
+
+              <div class="mt-4 p-4 bg-white rounded-lg">
+                <h3 class="text-sm font-semibold mb-2">Standort</h3>
+                <div class="text-sm text-gray-700">
+                  <div>{data.overview.vehicleLocation?.name}</div>
+                  <div>{data.overview.vehicleLocation?.street}</div>
+                  <div>{data.overview.vehicleLocation?.postalCode} {data.overview.vehicleLocation?.city}</div>
+                </div>
+              </div>
+            </aside>
+          </div>
+
+          <div class="p-6 border-t bg-gray-50">
+            <details class="bg-white rounded-md shadow-inner p-4">
+              <summary class="cursor-pointer font-medium">Rohdaten anzeigen</summary>
+              <pre class="mt-3 overflow-auto text-xs bg-gray-100 p-3 rounded">{JSON.stringify(data, null, 2)}</pre>
+            </details>
+          </div>
+        </article>
+      ) : data && data.error ? (
+        <div class="text-red-600">Fehler: {data.error}</div>
+      ) : (
+        <div>Keine Daten verfügbar</div>
+      )}
+    </div>
+  </main>
+</Layout>

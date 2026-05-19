@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="de">
 	<head>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width" />
@@ -7,8 +7,16 @@
 		<link rel="icon" href="/favicon.ico" />
 		<meta name="generator" content={Astro.generator} />
 		<title>Astro Basics</title>
+		<link rel="stylesheet" href="/src/styles/global.css" />
 	</head>
-	<body>
+	<body class="bg-gray-50 text-gray-800">
+		<header class="bg-white shadow-sm">
+			<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+				<div class="h-16 flex items-center">
+					<a class="text-lg font-semibold text-gray-900" href="/">Fahrzeug-Listing</a>
+				</div>
+			</div>
+		</header>
 		<slot />
 	</body>
 </html>
